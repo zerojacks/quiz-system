@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { QuizList } from './pages/QuizList';
 import { IdiomPage } from './pages/IdiomPage'; // 成语解释页面
