@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS idioms;
+CREATE TABLE IF NOT EXISTS idioms (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  idiom TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  examples TEXT NOT NULL,
+  exam_images TEXT
+);
