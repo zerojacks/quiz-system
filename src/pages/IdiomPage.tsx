@@ -1,6 +1,6 @@
 // src/pages/IdiomPage.tsx
 import React, { useState, useEffect } from 'react';
-import { getIdioms, updateIdiom } from '../api/idiomApi'; // 更新导入路径
+import { getIdioms } from '../api/idiomApi'; // 更新导入路径
 import { Idiom } from '../types/idiom'; // 导入 Idiom 接口
 import IdiomDisplay from '../components/IdiomDisplay'; // 导入 IdiomDisplay 组件
 
