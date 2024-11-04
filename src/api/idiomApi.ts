@@ -1,6 +1,6 @@
 // src/api/idiomApi.ts
 const BASE_URL = 'https://quiz-system.zerojack-shi.workers.dev'; // 替换为你的 Worker URL
-import { Idiom, ImageInfo } from '../types/idiom'; // 替换为你的 Idiom 类型定义
+import { Idiom, ImageInfo, MajorInfo, MinorInfo } from '../types/idiom'; // 替换为你的 Idiom 类型定义
 
 export const getIdioms = async () => {
     const response = await fetch(`${BASE_URL}/idioms`);
@@ -69,4 +69,82 @@ export const uploadImageToImgbb = (file: File, onProgress: (progress: number) =>
 
         xhr.send(formData);
     });
+};
+
+// 获取成语大类信息
+export const fetchMajorTypeInfo = async (typeCode: string): Promise<MajorInfo | null> => {
+    try {
+        const response = await fetch(`${BASE_URL}/idiom_major_types?type_code=${encodeURIComponent(typeCode)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error('获取大类信息失败');
+        }
+        const data = await response.json();
+        return data && data.length > 0 ? data[0] : null;
+    } catch (error) {
+        console.error('获取大类信息失败:', error);
+        throw error;
+    }
+};
+
+// 获取成语小类信息
+export const fetchMinorTypeInfo = async (typeCode: string): Promise<MinorInfo | null> => {
+    try {
+        const response = await fetch(`${BASE_URL}/idiom_minor_types?type_code=${encodeURIComponent(typeCode)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error('获取小类信息失败');
+        }
+        const data = await response.json();
+        return data && data.length > 0 ? data[0] : null;
+    } catch (error) {
+        console.error('获取小类信息失败:', error);
+        throw error;
+    }
+};
+
+// 获取所有大类信息
+export const fetchAllMajorTypes = async (): Promise<MajorInfo[]> => {
+    try {
+        const response = await fetch(`${BASE_URL}/idiom_major_types?type_code=all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error('获取所有大类信息失败');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('获取所有大类信息失败:', error);
+        throw error;
+    }
+};
+
+// 获取所有小类信息
+export const fetchAllMinorTypes = async (): Promise<MinorInfo[]> => {
+    try {
+        const response = await fetch(`${BASE_URL}/idiom_minor_types?type_code=all`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error('获取所有小类信息失败');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('获取所有小类信息失败:', error);
+        throw error;
+    }
 };

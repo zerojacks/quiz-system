@@ -3,6 +3,8 @@ interface Idiom {
 	description: string;
 	examples: string[];
 	examImages?: string[];  // 可选的图片 URL 数组
+	major_type_code: string;
+	minor_type_code: string;
 }
 
 interface Env {
@@ -27,14 +29,16 @@ export default {
 			// 获取所有成语
 			if (url.pathname === '/idioms' && request.method === 'GET') {
 				const result = await env.DB
-					.prepare('SELECT idiom, description, examples, exam_images FROM idioms')
+					.prepare('SELECT idiom, description, examples, exam_images, major_type_code, minor_type_code FROM idioms ORDER BY major_type_code')
 					.all();
 
 				const idioms = result.results?.map(row => ({
 					idiom: row.idiom,
 					description: row.description,
 					examples: JSON.parse(row.examples as string),
-					examImages: row.exam_images ? JSON.parse(row.exam_images as string) : []
+					examImages: row.exam_images ? JSON.parse(row.exam_images as string) : [],
+					major_type_code: row.major_type_code,
+					minor_type_code: row.minor_type_code,
 				}));
 
 				return new Response(JSON.stringify(idioms), {
@@ -45,7 +49,67 @@ export default {
 				});
 			}
 
-			// 更新成语
+			if (url.pathname === '/idiom_major_types' && request.method === 'GET') {
+				const typeCode = url.searchParams.get('type_code');
+			
+				let query = 'SELECT type_code, type_name, description FROM idiom_major_types';
+				let stmt;
+				
+				if (typeCode && typeCode !== 'all') {
+					query += ' WHERE type_code = ?';
+					stmt = env.DB.prepare(query);
+					stmt = stmt.bind(typeCode);
+				} else {
+					stmt = env.DB.prepare(query);
+				}
+				console.log("typeCode", typeCode);
+				const result = await stmt.all();
+				
+				const major_types = result.results?.map(row => ({
+					type_code: row.type_code,
+					type_name: row.type_name,
+					description: row.description,
+				}));
+			
+				return new Response(JSON.stringify(major_types), {
+					headers: {
+						'Content-Type': 'application/json',
+						...corsHeaders
+					}
+				});
+			}
+
+			if (url.pathname === '/idiom_minor_types' && request.method === 'GET') {
+				const typeCode = url.searchParams.get('type_code'); // 获取查询参数
+
+				let query = 'SELECT type_code, major_type_code, type_name, description FROM idiom_minor_types';
+				let stmt;
+
+				if (typeCode && typeCode !== 'all') {
+					query += ' WHERE type_code = ?';
+					stmt = env.DB.prepare(query);
+					stmt = stmt.bind(typeCode);
+				} else {
+					stmt = env.DB.prepare(query);
+				}
+
+				const result = await stmt.all();
+				console.log(result);
+				const minor_types = result.results?.map(row => ({
+					type_code: row.type_code,
+					type_name: row.type_name,
+					major_type_code: row.major_type_code,
+					description: row.description,
+				}));
+
+				return new Response(JSON.stringify(minor_types), {
+					headers: {
+						'Content-Type': 'application/json',
+						...corsHeaders
+					}
+				});
+			}
+
             // 更新成语
             if (url.pathname === '/update-idiom' && request.method === 'POST') {
                 const updatedIdiom: Idiom = await request.json();
@@ -60,14 +124,16 @@ export default {
                     // 如果成语不存在，插入新成语
                     const insertResult = await env.DB
                         .prepare(
-                            `INSERT INTO idioms (idiom, description, examples, exam_images) 
-                            VALUES (?, ?, ?, ?)`
+                            `INSERT INTO idioms (idiom, description, examples, exam_images, major_type_code, minor_type_code) 
+                            VALUES (?, ?, ?, ?, ?, ?)`
                         )
                         .bind(
                             updatedIdiom.idiom,
                             updatedIdiom.description,
                             JSON.stringify(updatedIdiom.examples),
-                            updatedIdiom.examImages ? JSON.stringify(updatedIdiom.examImages) : null
+                            updatedIdiom.examImages ? JSON.stringify(updatedIdiom.examImages) : null,
+							updatedIdiom.major_type_code? updatedIdiom.major_type_code : null,
+							updatedIdiom.minor_type_code? updatedIdiom.minor_type_code : null
                         )
                         .run();
 
@@ -89,14 +155,18 @@ export default {
                         `UPDATE idioms 
                         SET description = ?, 
                             examples = ?,
-                            exam_images = ?
+                            exam_images = ?,
+							major_type_code = ?,
+							minor_type_code = ?
                         WHERE idiom = ?`
                     )
                     .bind(
                         updatedIdiom.description,
                         JSON.stringify(updatedIdiom.examples),
                         updatedIdiom.examImages ? JSON.stringify(updatedIdiom.examImages) : null,
-                        updatedIdiom.idiom
+						updatedIdiom.major_type_code? updatedIdiom.major_type_code : null,
+						updatedIdiom.minor_type_code? updatedIdiom.minor_type_code : null,
+                        updatedIdiom.idiom,
                     )
                     .run();
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Idiom, ImageInfo } from '../types/idiom';
 import { uploadImageToImgbb, updateIdiom } from '../api/idiomApi';
-import { X, Upload, ZoomIn, Loader2 } from 'lucide-react';
+import { X, Upload, ZoomIn, Loader2, Edit } from 'lucide-react';
 import ImagePreview from './ImagePreview';
+import IdiomTypeDisplay from './IdiomTypeDisplay';
 
 interface IdiomDisplayProps {
     idiom: Idiom;
@@ -102,7 +103,17 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
 
     const handleSave = async () => {
         await handleUpdateIdiom(localIdiom);
+        console.log('成语已保存:', localIdiom);
         setIsEditing(false);
+    };
+
+    const handleTypeUpdated = async (idiom: Idiom) => {
+        const updatedIdiom = {
+            ...localIdiom,
+            major_type_code: idiom.major_type_code,
+            minor_type_code: idiom.minor_type_code,
+        };
+        setLocalIdiom(updatedIdiom);
     };
 
     const renderImageUploader = () => (
@@ -179,9 +190,24 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         );
     };
 
+    const highlightIdiom = (text: string) => {
+        return text.replace(
+            new RegExp(localIdiom.idiom, 'g'),
+            `<span class="bg-green-200">${localIdiom.idiom}</span>`
+        );
+    };
+
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-lg shadow p-6 relative">
+            <button
+                onClick={() => setIsEditing(true)}
+                className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-colors"
+                title="编辑"
+            >
+                <Edit size={20} />
+            </button>
             <h2 className="text-3xl font-bold mb-4">{localIdiom.idiom}</h2>
+            <IdiomTypeDisplay idiom={localIdiom} isEditing={isEditing} onUpdate={handleTypeUpdated} />
             {isEditing ? (
                 <div className="space-y-4">
                     <div>
@@ -196,12 +222,12 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         />
                     </div>
 
-                    <div>
+                    <div className='w-full'>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             例句
                         </label>
                         {(localIdiom.examples || []).map((example, index) => (
-                            <div key={index} className="flex gap-2 mb-2">
+                            <div key={index} className="flex gap-2 mb-2 max-h-72 overflow-auto">
                                 <textarea
                                     value={example || ''}
                                     onChange={(e) => {
@@ -210,7 +236,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                                         setEditedExamples(newExamples);
                                     }}
                                     placeholder={`请输入例句 ${index + 1}`}
-                                    className="w-full border rounded p-2"
+                                    className="w-full border rounded p-2 max-h-72 overflow-auto"
                                 />
                                 <button
                                     onClick={() => {
@@ -223,12 +249,14 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                                 </button>
                             </div>
                         ))}
-                        <button
-                            onClick={() => setEditedExamples([...(localIdiom.examples || []), ''])}
-                            className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                        >
-                            添加例句
-                        </button>
+                        <div className="flex justify-end"> {/* 添加此 div 以右对齐按钮 */}
+                            <button
+                                onClick={() => setEditedExamples([...(localIdiom.examples || []), ''])}
+                                className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                            >
+                                添加例句
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mt-6">
@@ -237,7 +265,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         {renderImages()}
                     </div>
 
-                    <div className="flex gap-4 mt-6">
+                    <div className="flex justify-end gap-4 mt-6 items-end flex-row"> {/* 修改为 justify-end */}
                         <button
                             onClick={handleSave}
                             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
@@ -256,7 +284,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     </div>
                 </div>
             ) : (
-                <div>
+                <div className='p-4 '>
                     <div className="mb-6">
                         <h3 className="text-xl font-semibold mb-2">描述:</h3>
                         <p className="text-lg">
@@ -268,12 +296,14 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         <h3 className="text-xl font-semibold mb-3">例句:</h3>
                         {localIdiom.examples && localIdiom.examples.length > 0 ? (
                             <ul className="space-y-3 list-disc pl-5">
-                                {localIdiom.examples.map((example, index) => (
-                                    <li key={index} className="text-gray-700">
-                                        {example}
-                                    </li>
-                                ))}
-                            </ul>
+                            {localIdiom.examples.map((example, index) => (
+                                <li
+                                    key={index}
+                                    dangerouslySetInnerHTML={{ __html: highlightIdiom(example) }}
+                                    className="text-gray-700"
+                                />
+                            ))}
+                        </ul>
                         ) : (
                             <p className="text-gray-400">暂无例句</p>
                         )}
@@ -283,13 +313,6 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         <h3 className="text-xl font-semibold mb-3">真题示例:</h3>
                         {renderImages()}
                     </div>
-
-                    <button
-                        onClick={() => setIsEditing(true)}
-                        className="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
-                    >
-                        编辑
-                    </button>
                 </div>
             )}
 
