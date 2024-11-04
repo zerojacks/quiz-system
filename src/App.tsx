@@ -3,6 +3,9 @@ import { QuizList } from './pages/QuizList';
 import { IdiomPage } from './pages/IdiomPage'; // 成语解释页面
 import { HomePage } from './pages/HomePage'; // 新增主页组件
 import { DevModePage } from './pages/DevModePage'; // 新增开发者模式页面
+import { UploadConfigPage } from './pages/UploadConfig';
+import { CategoryEditorPage } from './pages/CategoryEditorPage';
+
 
 function App() {
   return (
@@ -42,6 +45,8 @@ function App() {
             <Route path="/quiz" element={<QuizList />} /> {/* 原有的测验列表路由 */}
             <Route path="/idiom" element={<IdiomPage />} /> {/* 成语解释页面路由 */}
             <Route path="/devmode" element={<DevModePage />} /> {/* 开发者模式路由 */}
+            <Route path="/devmode/uploadconfig" element={<UploadConfigPage />} />
+            <Route path="/devmode/catergory" element={<CategoryEditorPage />} />
           </Routes>
         </main>
       </div>
