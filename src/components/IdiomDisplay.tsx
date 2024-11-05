@@ -289,18 +289,18 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                 </div>
                 
-                {/* Description skeleton */}
+                {/* Description section */}
                 <div className="space-y-2">
-                    <div className="h-5 bg-gray-200 rounded w-1/6"></div>
+                    <h3 className="text-xl font-semibold">描述:</h3>
                     <div className="space-y-2">
                         <div className="h-4 bg-gray-200 rounded w-full"></div>
                         <div className="h-4 bg-gray-200 rounded w-full"></div>
                     </div>
                 </div>
                 
-                {/* Examples skeleton */}
+                {/* Examples section */}
                 <div className="space-y-2">
-                    <div className="h-5 bg-gray-200 rounded w-1/6"></div>
+                    <h3 className="text-xl font-semibold">例句:</h3>
                     <div className="space-y-2">
                         <div className="h-4 bg-gray-200 rounded w-full"></div>
                         <div className="h-4 bg-gray-200 rounded w-5/6"></div>
@@ -308,9 +308,9 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     </div>
                 </div>
                 
-                {/* Images skeleton */}
+                {/* Images section */}
                 <div className="space-y-2">
-                    <div className="h-5 bg-gray-200 rounded w-1/6"></div>
+                    <h3 className="text-xl font-semibold">真题示例:</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {[1, 2, 3].map((i) => (
                             <div key={i} className="aspect-w-16 aspect-h-9">
