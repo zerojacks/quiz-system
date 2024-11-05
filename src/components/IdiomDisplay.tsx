@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Idiom, ImageInfo } from '../types/idiom';
-import { uploadImageToImgbb, updateIdiom } from '../api/idiomApi';
+import { uploadImageToImgbb, updateIdiom, getIdiomApi } from '../api/idiomApi';
 import { X, Upload, ZoomIn, Loader2, Edit } from 'lucide-react';
 import ImagePreview from './ImagePreview';
 import IdiomTypeDisplay from './IdiomTypeDisplay';
@@ -9,6 +9,11 @@ import { toast } from 'react-toastify';
 interface IdiomDisplayProps {
     idiom: Idiom;
     onUpdate: (updatedIdiom: Idiom) => void;
+}
+
+interface UploadingInfo {
+    state: boolean;
+    content: string;
 }
 
 const UPDATE_TIMEOUT = 30000; // 30 seconds timeout for updates
@@ -20,12 +25,35 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedImage, setSelectedImage] = useState<ImageInfo | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [isUpdating, setIsUpdating] = useState(false);
+    const [uploadinginfo, setUploadingInfo] = useState<UploadingInfo>({state:false, content:""});
     const [updateTimer, setUpdateTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        setLocalIdiom(idiom);
-        setExamImages(idiom.examImages || []);
+        const getidiominfo = async() => {
+            setIsLoading(true);
+            const timer = startUpdateTimeout();
+            setUploadingInfo({state:true, content:"正在读取，请稍后..."});
+            try {
+                const getidiom = await getIdiomApi(idiom.idiom);
+                if (getidiom) {
+                    setLocalIdiom(getidiom);
+                    setExamImages(getidiom.examImages || []);
+                } else {
+                    toast.error('获取成语信息失败，请重试');
+                    setExamImages([]);
+                    setLocalIdiom(idiom);
+                }       
+            } catch (error) {
+                setExamImages([]);
+                setLocalIdiom(idiom);
+            } finally {
+                clearUpdateTimeout(timer);
+                setUploadingInfo({state:false, content:""});
+                setIsLoading(false);
+            }
+        }
+        getidiominfo();
     }, [idiom]);
 
     // Cleanup timer on component unmount
@@ -39,7 +67,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
 
     const startUpdateTimeout = () => {
         const timer = setTimeout(() => {
-            setIsUpdating(false);
+            setUploadingInfo({state:false, content:""});
             toast.error('更新超时，请重试');
         }, UPDATE_TIMEOUT);
         setUpdateTimer(timer);
@@ -90,8 +118,8 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
     };
 
     const handleDeleteImage = async (index: number) => {
-        if (isUpdating) return;
-        setIsUpdating(true);
+        if (uploadinginfo.state) return;
+        setUploadingInfo({state:true, content:"正在删除图片，请稍后..."});
         const timer = startUpdateTimeout();
 
         try {
@@ -107,14 +135,14 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         } catch (error) {
             toast.error('删除图片失败，请重试。');
         } finally {
-            setIsUpdating(false);
+            setUploadingInfo({state:false, content:""});
             clearUpdateTimeout(timer);
         }
     };
 
     const handleUpdateIdiom = async (updatedIdiom: Idiom) => {
-        if (isUpdating) return;
-        setIsUpdating(true);
+        if (uploadinginfo.state) return;
+        setUploadingInfo({state:true, content:"正在更新，请稍后..."});
         const timer = startUpdateTimeout();
 
         try {
@@ -126,13 +154,13 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
             toast.error('更新成语失败，请重试。');
             throw error;
         } finally {
-            setIsUpdating(false);
+            setUploadingInfo({state:false, content:""});
             clearUpdateTimeout(timer);
         }
     };
 
     const handleSave = async () => {
-        if (isUpdating) return;
+        if (uploadinginfo.state) return;
 
         try {
             await handleUpdateIdiom(localIdiom);
@@ -249,12 +277,62 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         );
     };
 
+    const LoadingSkeleton = () => (
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="animate-pulse space-y-6">
+                {/* Title skeleton */}
+                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                
+                {/* Type info skeleton */}
+                <div className="space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+                
+                {/* Description skeleton */}
+                <div className="space-y-2">
+                    <div className="h-5 bg-gray-200 rounded w-1/6"></div>
+                    <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
+                    </div>
+                </div>
+                
+                {/* Examples skeleton */}
+                <div className="space-y-2">
+                    <div className="h-5 bg-gray-200 rounded w-1/6"></div>
+                    <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-full"></div>
+                        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                        <div className="h-4 bg-gray-200 rounded w-4/6"></div>
+                    </div>
+                </div>
+                
+                {/* Images skeleton */}
+                <div className="space-y-2">
+                    <div className="h-5 bg-gray-200 rounded w-1/6"></div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="aspect-w-16 aspect-h-9">
+                                <div className="w-full h-full bg-gray-200 rounded"></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    if (isLoading) {
+        return <LoadingSkeleton />;
+    }
+    
     return (
         <div className="bg-white rounded-lg shadow p-6 relative">
             <button
                 onClick={() => setIsEditing(true)}
                 className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-colors disabled:opacity-50"
-                disabled={isUpdating}
+                disabled={uploadinginfo.state}
                 title="编辑"
             >
                 <Edit size={20} />
@@ -321,10 +399,10 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     <div className="flex justify-end gap-4 mt-6 items-end flex-row"> {/* 修改为 justify-end */}
                         <button
                             onClick={handleSave}
-                            disabled={isUpdating}
+                            disabled={uploadinginfo.state}
                             className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
-                            {isUpdating ? (
+                            {uploadinginfo.state ? (
                                 <>
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                     保存中...
@@ -338,7 +416,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                                 setLocalIdiom(idiom);
                                 setIsEditing(false);
                             }}
-                            disabled={isUpdating}
+                            disabled={uploadinginfo.state}
                             className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
                         >
                             取消
@@ -385,11 +463,11 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                 />
             )}
             {/* Loading overlay */}
-            {isUpdating && (
+            {uploadinginfo.state && (
                 <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
                     <div className="bg-white p-4 rounded-lg flex items-center gap-2">
                         <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-                        <span>更新中...</span>
+                        <span>{uploadinginfo.content}</span>
                     </div>
                 </div>
             )}

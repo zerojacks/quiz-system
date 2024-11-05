@@ -11,6 +11,10 @@ interface Env {
 	DB: D1Database;
 }
 
+interface IdiomRequest {
+    idiom: string;
+}
+
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const corsHeaders = {
@@ -49,6 +53,68 @@ export default {
 				});
 			}
 
+			if (url.pathname === '/idiom' && request.method === 'GET') {
+				// 从URL中获取idiom参数
+				const urlParams = new URL(request.url).searchParams;
+				const encodedIdiom = urlParams.get('idiom');
+				
+				if (!encodedIdiom) {
+					return new Response(JSON.stringify({ message: 'Idiom parameter is required' }), {
+						status: 400,
+						headers: {
+							'Content-Type': 'application/json',
+							...corsHeaders
+						}
+					});
+				}
+			
+				// 解码URL编码的中文成语
+				const decodedIdiom = decodeURIComponent(encodedIdiom);
+			
+				try {
+					const result = await env.DB
+						.prepare('SELECT idiom, description, examples, exam_images, major_type_code, minor_type_code FROM idioms WHERE idiom = ?')
+						.bind(decodedIdiom)
+						.first();
+					
+					if (!result) {
+						return new Response(JSON.stringify({ message: 'Idiom not found' }), {
+							status: 404,
+							headers: {
+								'Content-Type': 'application/json',
+								...corsHeaders
+							}
+						});
+					}
+			
+					const idiom = {
+						idiom: result.idiom,
+						description: result.description,
+						examples: JSON.parse(result.examples as string),
+						examImages: result.exam_images ? JSON.parse(result.exam_images as string) : [],
+						major_type_code: result.major_type_code,
+						minor_type_code: result.minor_type_code,
+					};
+			
+					return new Response(JSON.stringify(idiom), {
+						headers: {
+							'Content-Type': 'application/json',
+							...corsHeaders
+						}
+					});
+				} catch (error: unknown) {
+					const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+					
+					return new Response(JSON.stringify({ message: 'Internal server error', details: errorMessage }), {
+						status: 500,
+						headers: {
+							'Content-Type': 'application/json',
+							...corsHeaders
+						}
+					});
+				}
+			}
+			
 			if (url.pathname === '/idiom_major_types' && request.method === 'GET') {
 				const typeCode = url.searchParams.get('type_code');
 			

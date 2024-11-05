@@ -10,6 +10,28 @@ export const getIdioms = async () => {
     return await response.json();
 };
 
+export const getIdiomApi = async (idiom: string): Promise<Idiom | null> => {
+    try {
+        const response = await fetch(`${BASE_URL}/idiom?idiom=${encodeURIComponent(idiom)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || '获取成语信息失败!');
+        }
+
+        const data: Idiom = await response.json();
+        return data || null;
+    } catch (error) {
+        console.error('获取成语信息失败:', error);
+        throw error;
+    }
+};
+
 export const updateIdiom = async (updatedIdiom: Idiom) => {
     const response = await fetch(`${BASE_URL}/update-idiom`, {
         method: 'POST',
