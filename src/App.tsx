@@ -15,7 +15,7 @@ function App() {
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto py-4 px-4 flex items-center">
             <Link to="/" className="flex items-center">
-              <img src="/public/study.svg" alt="学习图标" className="mr-2" style={{ width: '30px', height: '30px' }} /> {/* 使用学习图标 */}
+              <img src="./public/study.svg" alt="学习图标" className="mr-2" style={{ width: '30px', height: '30px' }} /> {/* 使用学习图标 */}
             </Link>
             <nav className="ml-4"> {/* 使用 ml-auto 将导航菜单推到右边 */}
               <ul className="flex space-x-4">
