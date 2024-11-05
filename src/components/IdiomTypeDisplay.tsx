@@ -33,6 +33,7 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching type information:', error);
+                toast.error('获取类型信息失败，请重试。'); // 显示错误消息
                 setLoading(false);
             }
         };
@@ -42,6 +43,7 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
     // Fetch current type information when idiom changes
     useEffect(() => {
         const fetchCurrentTypes = async () => {
+            console.log("idiom.major_type_code: ", idiom.major_type_code, " idiom.minor_type_code: ", idiom.minor_type_code);
             if (idiom.major_type_code || idiom.minor_type_code) {
                 try {
                     const [majorInfo, minorInfo] = await Promise.all([
@@ -52,11 +54,24 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
                     setCurrentMinorType(minorInfo);
                 } catch (error) {
                     console.error('Error fetching current type information:', error);
+                    toast.error('获取当前类型信息失败，请重试。'); // 显示错误消息
+                    setCurrentMajorType({ type_code: idiom.major_type_code, type_name: '未知', description: ''});
+                    setCurrentMinorType({ type_code: idiom.minor_type_code, major_type_code: idiom.major_type_code, type_name: '未知', description: ''});
+                } finally {
+                    setLoading(false);
                 }
+            } else {
+                setCurrentMajorType(null);
+                setCurrentMinorType(null);
             }
         };
         fetchCurrentTypes();
     }, [idiom]);
+
+    useEffect(() => {
+        const filteredTypes = minorTypes.filter((type) => type.major_type_code === currentMajorType?.type_code);
+        setFilteredTypes(filteredTypes);
+    }, [currentMajorType, minorTypes]); // 添加 minorTypes 作为依赖项
 
     const handleMajorTypeChange = (selectedType: MajorInfo) => {
         const updatedIdiom = {
@@ -69,6 +84,7 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
         const filteredTypes = minorTypes.filter((type) => type.major_type_code === selectedType.type_code);
         setFilteredTypes(filteredTypes);
         onUpdate(updatedIdiom);
+        toast.success(`已选择大类: ${selectedType.type_name}`); // 显示成功消息
     };
 
     const handleMinorTypeChange = (selectedType: MinorInfo) => {
@@ -82,6 +98,7 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
         };
         setCurrentMinorType(selectedType);
         onUpdate(updatedIdiom);
+        toast.success(`已选择小类: ${selectedType.type_name}`); // 显示成功消息
     };
 
     if (loading) {

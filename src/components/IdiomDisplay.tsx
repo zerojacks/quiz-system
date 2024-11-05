@@ -4,12 +4,14 @@ import { uploadImageToImgbb, updateIdiom } from '../api/idiomApi';
 import { X, Upload, ZoomIn, Loader2, Edit } from 'lucide-react';
 import ImagePreview from './ImagePreview';
 import IdiomTypeDisplay from './IdiomTypeDisplay';
-import { toast } from 'react-toastify'; // 导入 toast
+import { toast } from 'react-toastify';
 
 interface IdiomDisplayProps {
     idiom: Idiom;
     onUpdate: (updatedIdiom: Idiom) => void;
 }
+
+const UPDATE_TIMEOUT = 30000; // 30 seconds timeout for updates
 
 const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
     const [localIdiom, setLocalIdiom] = useState<Idiom>(idiom);
@@ -18,18 +20,45 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedImage, setSelectedImage] = useState<ImageInfo | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateTimer, setUpdateTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         setLocalIdiom(idiom);
-        setExamImages(idiom.examImages || []); // 更新 examImages
-    }, [idiom]); // 当 idiom 变化时更新 localIdiom 和 examImages
+        setExamImages(idiom.examImages || []);
+    }, [idiom]);
+
+    // Cleanup timer on component unmount
+    useEffect(() => {
+        return () => {
+            if (updateTimer) {
+                clearTimeout(updateTimer);
+            }
+        };
+    }, [updateTimer]);
+
+    const startUpdateTimeout = () => {
+        const timer = setTimeout(() => {
+            setIsUpdating(false);
+            toast.error('更新超时，请重试');
+        }, UPDATE_TIMEOUT);
+        setUpdateTimer(timer);
+        return timer;
+    };
+
+    const clearUpdateTimeout = (timer: ReturnType<typeof setTimeout>) => {
+        clearTimeout(timer);
+        setUpdateTimer(null);
+    };
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
-        if (!files) return;
+        if (!files || isUploading) return;
 
         setIsUploading(true);
         setUploadProgress(0);
+
+        const timer = startUpdateTimeout();
 
         try {
             const imageInfos: ImageInfo[] = [];
@@ -49,37 +78,78 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
             await handleUpdateIdiom(updatedIdiom);
             setExamImages(updatedImages);
             setLocalIdiom(updatedIdiom);
-            toast.success('图片上传成功！'); // 成功消息
+            toast.success('图片上传成功！');
         } catch (error) {
             console.error('上传图片失败:', error);
-            toast.error('上传图片失败，请重试。'); // 错误消息
+            toast.error('上传图片失败，请重试。');
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
+            clearUpdateTimeout(timer);
         }
     };
 
     const handleDeleteImage = async (index: number) => {
-        const updatedImages = examImages.filter((_, i) => i !== index);
-        const updatedIdiom = {
-            ...localIdiom,
-            examImages: updatedImages,
-        };
-        toast.success('图片删除成功！'); // 成功消息
-        await handleUpdateIdiom(updatedIdiom);
-        setExamImages(updatedImages);
-        setLocalIdiom(updatedIdiom);
+        if (isUpdating) return;
+        setIsUpdating(true);
+        const timer = startUpdateTimeout();
+
+        try {
+            const updatedImages = examImages.filter((_, i) => i !== index);
+            const updatedIdiom = {
+                ...localIdiom,
+                examImages: updatedImages,
+            };
+            await handleUpdateIdiom(updatedIdiom);
+            setExamImages(updatedImages);
+            setLocalIdiom(updatedIdiom);
+            toast.success('图片删除成功！');
+        } catch (error) {
+            toast.error('删除图片失败，请重试。');
+        } finally {
+            setIsUpdating(false);
+            clearUpdateTimeout(timer);
+        }
     };
 
     const handleUpdateIdiom = async (updatedIdiom: Idiom) => {
+        if (isUpdating) return;
+        setIsUpdating(true);
+        const timer = startUpdateTimeout();
+
         try {
             await updateIdiom(updatedIdiom);
             onUpdate(updatedIdiom);
-            toast.success('成语更新成功！'); // 成功消息
+            toast.success('成语更新成功！');
         } catch (error) {
             console.error('更新成语失败:', error);
-            toast.error('更新成语失败，请重试。'); // 错误消息
+            toast.error('更新成语失败，请重试。');
+            throw error;
+        } finally {
+            setIsUpdating(false);
+            clearUpdateTimeout(timer);
         }
+    };
+
+    const handleSave = async () => {
+        if (isUpdating) return;
+
+        try {
+            await handleUpdateIdiom(localIdiom);
+            setIsEditing(false);
+        } catch (error) {
+            // Error already handled in handleUpdateIdiom
+            toast.error('更新成语失败，请重试。');
+        };
+    };
+
+    const handleTypeUpdated = async (idiom: Idiom) => {
+        const updatedIdiom = {
+            ...localIdiom,
+            major_type_code: idiom.major_type_code,
+            minor_type_code: idiom.minor_type_code,
+        };
+        setLocalIdiom(updatedIdiom);
     };
 
     const handleSetDescription = async (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -94,21 +164,6 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         const updatedIdiom = {
             ...localIdiom,
             examples: value
-        };
-        setLocalIdiom(updatedIdiom);
-    };
-
-    const handleSave = async () => {
-        await handleUpdateIdiom(localIdiom);
-        console.log('成语已保存:', localIdiom);
-        setIsEditing(false);
-    };
-
-    const handleTypeUpdated = async (idiom: Idiom) => {
-        const updatedIdiom = {
-            ...localIdiom,
-            major_type_code: idiom.major_type_code,
-            minor_type_code: idiom.minor_type_code,
         };
         setLocalIdiom(updatedIdiom);
     };
@@ -198,7 +253,8 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         <div className="bg-white rounded-lg shadow p-6 relative">
             <button
                 onClick={() => setIsEditing(true)}
-                className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-colors"
+                className="absolute top-4 right-4 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-colors disabled:opacity-50"
+                disabled={isUpdating}
                 title="编辑"
             >
                 <Edit size={20} />
@@ -265,16 +321,25 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     <div className="flex justify-end gap-4 mt-6 items-end flex-row"> {/* 修改为 justify-end */}
                         <button
                             onClick={handleSave}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+                            disabled={isUpdating}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
-                            保存
+                            {isUpdating ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    保存中...
+                                </>
+                            ) : (
+                                '保存'
+                            )}
                         </button>
                         <button
                             onClick={() => {
                                 setLocalIdiom(idiom);
                                 setIsEditing(false);
                             }}
-                            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+                            disabled={isUpdating}
+                            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
                         >
                             取消
                         </button>
@@ -293,14 +358,14 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         <h3 className="text-xl font-semibold mb-3">例句:</h3>
                         {localIdiom.examples && localIdiom.examples.length > 0 ? (
                             <ul className="space-y-3 list-disc pl-5">
-                            {localIdiom.examples.map((example, index) => (
-                                <li
-                                    key={index}
-                                    dangerouslySetInnerHTML={{ __html: highlightIdiom(example) }}
-                                    className="text-gray-700"
-                                />
-                            ))}
-                        </ul>
+                                {localIdiom.examples.map((example, index) => (
+                                    <li
+                                        key={index}
+                                        dangerouslySetInnerHTML={{ __html: highlightIdiom(example) }}
+                                        className="text-gray-700"
+                                    />
+                                ))}
+                            </ul>
                         ) : (
                             <p className="text-gray-400">暂无例句</p>
                         )}
@@ -318,6 +383,15 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     image={selectedImage}
                     onClose={() => setSelectedImage(null)}
                 />
+            )}
+            {/* Loading overlay */}
+            {isUpdating && (
+                <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
+                    <div className="bg-white p-4 rounded-lg flex items-center gap-2">
+                        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+                        <span>更新中...</span>
+                    </div>
+                </div>
             )}
         </div>
     );
