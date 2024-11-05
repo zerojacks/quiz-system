@@ -4,6 +4,7 @@ import { uploadImageToImgbb, updateIdiom } from '../api/idiomApi';
 import { X, Upload, ZoomIn, Loader2, Edit } from 'lucide-react';
 import ImagePreview from './ImagePreview';
 import IdiomTypeDisplay from './IdiomTypeDisplay';
+import { toast } from 'react-toastify'; // 导入 toast
 
 interface IdiomDisplayProps {
     idiom: Idiom;
@@ -20,7 +21,8 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
 
     useEffect(() => {
         setLocalIdiom(idiom);
-    }, [idiom]); // 当 idiom 变化时更新 localIdiom
+        setExamImages(idiom.examImages || []); // 更新 examImages
+    }, [idiom]); // 当 idiom 变化时更新 localIdiom 和 examImages
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -47,8 +49,10 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
             await handleUpdateIdiom(updatedIdiom);
             setExamImages(updatedImages);
             setLocalIdiom(updatedIdiom);
+            toast.success('图片上传成功！'); // 成功消息
         } catch (error) {
             console.error('上传图片失败:', error);
+            toast.error('上传图片失败，请重试。'); // 错误消息
         } finally {
             setIsUploading(false);
             setUploadProgress(0);
@@ -57,20 +61,11 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
 
     const handleDeleteImage = async (index: number) => {
         const updatedImages = examImages.filter((_, i) => i !== index);
-        const deleteUrl = examImages[index].deleteUrl;
-        if (deleteUrl) {
-            try {
-                await fetch(deleteUrl, { method: 'DELETE' });
-            } catch (error) {
-                console.error('删除图片失败:', error);
-            }
-        }
-
         const updatedIdiom = {
             ...localIdiom,
             examImages: updatedImages,
         };
-
+        toast.success('图片删除成功！'); // 成功消息
         await handleUpdateIdiom(updatedIdiom);
         setExamImages(updatedImages);
         setLocalIdiom(updatedIdiom);
@@ -80,8 +75,10 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         try {
             await updateIdiom(updatedIdiom);
             onUpdate(updatedIdiom);
+            toast.success('成语更新成功！'); // 成功消息
         } catch (error) {
             console.error('更新成语失败:', error);
+            toast.error('更新成语失败，请重试。'); // 错误消息
         }
     };
 

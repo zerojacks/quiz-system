@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify'; // 导入 ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // 导入样式
 import { QuizList } from './pages/QuizList';
 import { IdiomPage } from './pages/IdiomPage'; // 成语解释页面
 import { HomePage } from './pages/HomePage'; // 新增主页组件
@@ -6,18 +8,15 @@ import { DevModePage } from './pages/DevModePage'; // 新增开发者模式页�
 import { UploadConfigPage } from './pages/UploadConfig';
 import { CategoryEditorPage } from './pages/CategoryEditorPage';
 
-
 function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-100">
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto py-4 px-4 flex items-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              <Link to="/" className="hover:underline">
-                在线答题系统
-              </Link>
-            </h1>
+            <Link to="/" className="flex items-center">
+              <img src="/public/study.svg" alt="学习图标" className="mr-2" style={{ width: '30px', height: '30px' }} /> {/* 使用学习图标 */}
+            </Link>
             <nav className="ml-4"> {/* 使用 ml-auto 将导航菜单推到右边 */}
               <ul className="flex space-x-4">
                 <li>
@@ -46,9 +45,10 @@ function App() {
             <Route path="/idiom" element={<IdiomPage />} /> {/* 成语解释页面路由 */}
             <Route path="/devmode" element={<DevModePage />} /> {/* 开发者模式路由 */}
             <Route path="/devmode/uploadconfig" element={<UploadConfigPage />} />
-            <Route path="/devmode/catergory" element={<CategoryEditorPage />} />
+            <Route path="/devmode/category" element={<CategoryEditorPage />} />
           </Routes>
         </main>
+        <ToastContainer /> {/* 添加 ToastContainer */}
       </div>
     </BrowserRouter>
   );
