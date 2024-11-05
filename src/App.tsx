@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage'; // 新增主页组件
 import { DevModePage } from './pages/DevModePage'; // 新增开发者模式页面
 import { UploadConfigPage } from './pages/UploadConfig';
 import { CategoryEditorPage } from './pages/CategoryEditorPage';
+import { IdiomInfo } from './components/IdiomInfo';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
             <Route path="/devmode" element={<DevModePage />} /> {/* 开发者模式路由 */}
             <Route path="/devmode/uploadconfig" element={<UploadConfigPage />} />
             <Route path="/devmode/category" element={<CategoryEditorPage />} />
+            <Route path="/idiom/:idiomId" element={<IdiomInfo />} /> {/* 动态路由 */}
           </Routes>
         </main>
         <ToastContainer /> {/* 添加 ToastContainer */}
