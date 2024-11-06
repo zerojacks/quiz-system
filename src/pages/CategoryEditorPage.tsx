@@ -15,7 +15,7 @@ export const CategoryEditorPage: React.FC = () => {
             >
                 <ArrowLeft size={20} /> {/* 使用图标 */}
             </button>
-            <h2 className="text-2xl font-semibold text-center mb-4">工具 2 - 类别编辑器</h2>
+            <h2 className="text-2xl font-semibold text-center mb-4">类别编辑器</h2>
             <CategoryEditor /> {/* 渲染 CategoryEditor 组件 */}
         </div>
     );

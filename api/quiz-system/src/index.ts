@@ -1,3 +1,7 @@
+interface Env {
+	DB: D1Database;
+}
+
 interface Idiom {
 	idiom: string;
 	description: string;
@@ -7,12 +11,17 @@ interface Idiom {
 	minor_type_code: string;
 }
 
-interface Env {
-	DB: D1Database;
+export interface MajorType {
+    type_code: string;
+    type_name: string;
+    description?: string;
 }
 
-interface IdiomRequest {
-    idiom: string;
+export interface MinorType {
+    type_code: string;
+    major_type_code: string;
+    type_name: string;
+    description?: string;
 }
 
 export default {
@@ -175,6 +184,20 @@ export default {
 					}
 				});
 			}
+            if (url.pathname === '/major-types' && request.method === 'POST') {
+                return await handleCreateMajorType(request, env, corsHeaders);
+            }
+			if (url.pathname.match(/^\/major-types\/[\w-]+$/) && request.method === 'PUT') {
+                const typeCode = url.pathname.split('/').pop()!;
+                return await handleUpdateMajorType(typeCode, request, env, corsHeaders);
+            }
+			if (url.pathname === '/minor-types' && request.method === 'POST') {
+                return await handleCreateMinorType(request, env, corsHeaders);
+            }
+			if (url.pathname.match(/^\/minor-types\/[\w-]+$/) && request.method === 'PUT') {
+                const typeCode = url.pathname.split('/').pop()!;
+                return await handleUpdateMinorType(typeCode, request, env, corsHeaders);
+            }
 
             // 更新成语
             if (url.pathname === '/update-idiom' && request.method === 'POST') {
@@ -287,3 +310,212 @@ export default {
 		}
 	}
 };
+
+async function handleCreateMajorType(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+    const data: MajorType = await request.json();
+
+    // Validate required fields
+    if (!data.type_code || !data.type_name) {
+        return new Response(
+            JSON.stringify({ error: 'Missing required fields' }), 
+            { 
+                status: 400, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    }
+
+    try {
+        // Check if type_code already exists
+        const existing = await env.DB.prepare(
+            'SELECT type_code FROM idiom_major_types WHERE type_code = ?'
+        ).bind(data.type_code)
+        .first();
+
+        if (existing) {
+            return new Response(
+                JSON.stringify({ error: 'Type code already exists' }), 
+                { 
+                    status: 409, 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...corsHeaders 
+                    }
+                }
+            );
+        }
+
+        // Insert new major type
+        await env.DB.prepare(
+            'INSERT INTO idiom_major_types (type_code, type_name, description) VALUES (?, ?, ?)'
+        ).bind(data.type_code, data.type_name, data.description || null)
+        .run();
+
+        return new Response(
+            JSON.stringify({ success: true, data }), 
+            { 
+                status: 201, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    } catch (error) {
+        throw new Error('Failed to create major type');
+    }
+}
+
+async function handleUpdateMajorType(typeCode: string, request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+    const data: MinorType  = await request.json();
+
+    if (!data.type_name) {
+        return new Response(
+            JSON.stringify({ error: 'Missing type_name' }), 
+            { 
+                status: 400, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    }
+
+    try {
+        await env.DB.prepare(
+            'UPDATE idiom_major_types SET type_name = ? WHERE type_code = ?'
+        ).bind(data.type_name, typeCode)
+        .run();
+
+        return new Response(
+            JSON.stringify({ success: true }), 
+            { 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    } catch (error) {
+        throw new Error('Failed to update major type');
+    }
+}
+
+
+async function handleCreateMinorType(request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+    const data: MinorType = await request.json();
+
+    // Validate required fields
+    if (!data.type_code || !data.type_name || !data.major_type_code) {
+        return new Response(
+            JSON.stringify({ error: 'Missing required fields' }), 
+            { 
+                status: 400, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    }
+
+    try {
+        // Check if major_type_code exists
+        const majorType = await env.DB.prepare(
+            'SELECT type_code FROM idiom_major_types WHERE type_code = ?'
+        ).bind(data.major_type_code)
+        .first();
+
+        if (!majorType) {
+            return new Response(
+                JSON.stringify({ error: 'Major type does not exist' }), 
+                { 
+                    status: 404, 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...corsHeaders 
+                    }
+                }
+            );
+        }
+
+        // Check if type_code already exists
+        const existing = await env.DB.prepare(
+            'SELECT type_code FROM idiom_minor_types WHERE type_code = ?'
+        ).bind(data.type_code)
+        .first();
+
+        if (existing) {
+            return new Response(
+                JSON.stringify({ error: 'Type code already exists' }), 
+                { 
+                    status: 409, 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...corsHeaders 
+                    }
+                }
+            );
+        }
+
+        // Insert new minor type
+        await env.DB.prepare(
+            'INSERT INTO idiom_minor_types (type_code, major_type_code, type_name, description) VALUES (?, ?, ?, ?)'
+        ).bind(data.type_code, data.major_type_code, data.type_name, data.description || null)
+        .run();
+
+        return new Response(
+            JSON.stringify({ success: true, data }), 
+            { 
+                status: 201, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    } catch (error) {
+        throw new Error('Failed to create minor type');
+    }
+}
+
+
+async function handleUpdateMinorType(typeCode: string, request: Request, env: Env, corsHeaders: Record<string, string>): Promise<Response> {
+    const data: MinorType = await request.json();
+
+    if (!data.type_name) {
+        return new Response(
+            JSON.stringify({ error: 'Missing type_name' }), 
+            { 
+                status: 400, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    }
+
+    try {
+        await env.DB.prepare(
+            'UPDATE idiom_minor_types SET type_name = ? WHERE type_code = ?'
+        ).bind(data.type_name, typeCode)
+        .run();
+
+        return new Response(
+            JSON.stringify({ success: true }), 
+            { 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...corsHeaders 
+                }
+            }
+        );
+    } catch (error) {
+        throw new Error('Failed to update minor type');
+    }
+}

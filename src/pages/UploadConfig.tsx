@@ -58,7 +58,7 @@ export const UploadConfigPage = () => {
             >
                 <ArrowLeft size={20} /> {/* 使用 lucide-react 的图标 */}
             </button>
-            <h2 className="text-2xl font-semibold text-center mb-4">工具 1 - 上传文件</h2>
+            <h2 className="text-2xl font-semibold text-center mb-4">配置文件</h2>
             <div className="mb-4">
                 <input 
                     type="file" 

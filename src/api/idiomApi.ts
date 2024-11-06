@@ -170,3 +170,59 @@ export const fetchAllMinorTypes = async (): Promise<MinorInfo[]> => {
         throw error;
     }
 };
+
+export async function createMajorType(majorType: MajorInfo): Promise<void> {
+    const response = await fetch(`${BASE_URL}/major-types`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(majorType),
+    });
+    
+    if (!response.ok) {
+        throw new Error('创建大类失败');
+    }
+}
+
+export async function createMinorType(minorType: MinorInfo): Promise<void> {
+    const response = await fetch(`${BASE_URL}/minor-types`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(minorType),
+    });
+    
+    if (!response.ok) {
+        throw new Error('创建小类失败');
+    }
+}
+
+export async function updateMajorType(typeCode: string, newName: string): Promise<void> {
+    const response = await fetch(`${BASE_URL}/major-types/${typeCode}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type_name: newName }),
+    });
+    
+    if (!response.ok) {
+        throw new Error('更新大类失败');
+    }
+}
+
+export async function updateMinorType(typeCode: string, newName: string): Promise<void> {
+    const response = await fetch(`${BASE_URL}/minor-types/${typeCode}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type_name: newName }),
+    });
+    
+    if (!response.ok) {
+        throw new Error('更新小类失败');
+    }
+}

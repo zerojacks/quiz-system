@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getIdioms, fetchAllMajorTypes, fetchAllMinorTypes } from '../api/idiomApi';
 import { Idiom, MajorInfo, MinorInfo } from '../types/idiom';
 import { ChevronRightIcon, Menu, X } from 'lucide-react';
@@ -89,7 +89,6 @@ const getMajorName = (code: string, majorTypes: MajorInfo[]): string =>
     majorTypes.find((type) => type.type_code === code)?.type_name ?? '未分类';
 // ... existing code ...
 const TypeSelector: React.FC<TypeSelectorProps> = ({ allMajorCode, majorTypes, activeTab, onTabChange, className }) => {
-    console.log(allMajorCode);
     return (
         <List
             height={600}
@@ -117,10 +116,15 @@ const TypeSelector: React.FC<TypeSelectorProps> = ({ allMajorCode, majorTypes, a
 
 const IdiomCards: React.FC = () => {
     const navigate = useNavigate(); // 改用正确的命名
+    const location = useLocation(); // 使用 useLocation
     const [idioms, setIdioms] = useState<Idiom[]>([]);
     const [majorTypes, setMajorTypes] = useState<MajorInfo[]>([]);
     const [minorTypes, setMinorTypes] = useState<MinorInfo[]>([]);
-    const [activeTab, setActiveTab] = useState<string | null>(null);
+    // 从 location.state 获取 activeTab，如果没有则使用 sessionStorage
+    const [activeTab, setActiveTab] = useState<string | null>(() => {
+        const savedTab = sessionStorage.getItem('activeTab');
+        return location.state?.activeTab || savedTab || null;
+    });
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [idiomGroups, setIdiomGroups] = useState<{ [key: string]: IdiomGroup }>({});
@@ -136,11 +140,17 @@ const IdiomCards: React.FC = () => {
                     fetchAllMinorTypes()
                 ]);
                 setIdioms(allIdioms);
-                allMajorTypes.push({ type_code: UNCLASSIFIED, type_name: '未分类', description: '未分类' })
-                allMinorTypes.push({ type_code: UNCLASSIFIED, major_type_code: UNCLASSIFIED, type_name: '未分类', description: '未分类' })
+                allMajorTypes.push({ type_code: UNCLASSIFIED, type_name: '未分类', description: '未分类' });
+                allMinorTypes.push({ type_code: UNCLASSIFIED, major_type_code: UNCLASSIFIED, type_name: '未分类', description: '未分类' });
                 setMajorTypes(allMajorTypes);
                 setMinorTypes(allMinorTypes);
-                setActiveTab(allMajorTypes[0]?.type_code ?? null);
+                
+                // 如果没有激活的标签，设置默认值
+                if (!activeTab) {
+                    const defaultTab = allMajorTypes[0]?.type_code ?? null;
+                    setActiveTab(defaultTab);
+                    sessionStorage.setItem('activeTab', defaultTab || '');
+                }
             } catch (error) {
                 console.error('Failed to fetch data:', error);
             } finally {
@@ -201,8 +211,20 @@ const IdiomCards: React.FC = () => {
         setIsMenuOpen(false);
     };
 
+    useEffect(() => {
+        if (activeTab) {
+            sessionStorage.setItem('activeTab', activeTab);
+        }
+    }, [activeTab]);
+
     const handleIdiomSelect = (idiom: Idiom) => {
-        navigate(`/idiom/${idiom.idiom}`);
+        // 导航时保存当前状态
+        navigate(`/idiom/${idiom.idiom}`, {
+            state: {
+                activeTab,
+                previousPath: location.pathname
+            }
+        });
     };
 
     const filteredIdiomGroups = React.useMemo(() => {
