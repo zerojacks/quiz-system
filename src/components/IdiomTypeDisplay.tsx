@@ -43,7 +43,6 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
     // Fetch current type information when idiom changes
     useEffect(() => {
         const fetchCurrentTypes = async () => {
-            console.log("idiom.major_type_code: ", idiom.major_type_code, " idiom.minor_type_code: ", idiom.minor_type_code);
             if (idiom.major_type_code || idiom.minor_type_code) {
                 try {
                     const [majorInfo, minorInfo] = await Promise.all([
