@@ -20,11 +20,11 @@ function App() {
             </Link>
             <nav className="ml-4"> {/* 使用 ml-auto 将导航菜单推到右边 */}
               <ul className="flex space-x-4">
-                <li>
+                {/* <li>
                   <Link to="/quiz" className="text-blue-500 hover:underline">
                     开始测验
                   </Link>
-                </li>
+                </li> */}
                 <li>
                   <Link to="/idiom" className="text-blue-500 hover:underline">
                     成语解释
@@ -46,7 +46,7 @@ function App() {
             <Route path="/idiom" element={<IdiomPage />} /> {/* 成语解释页面路由 */}
             <Route path="/devmode" element={<DevModePage />} /> {/* 开发者模式路由 */}
             <Route path="/devmode/uploadconfig" element={<UploadConfigPage />} />
-            <Route path="/devmode/category" element={<CategoryEditorPage />} />
+            <Route path="/devmode/catergory" element={<CategoryEditorPage />} />
             <Route path="/idiom/:idiomId" element={<IdiomInfo />} /> {/* 动态路由 */}
           </Routes>
         </main>

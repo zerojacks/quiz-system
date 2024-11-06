@@ -62,11 +62,10 @@ export const IdiomInfo: React.FC = () => {
 
     return (
         <div className="p-4">
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-4" onClick={handleGoBack}>
                 <ArrowLeft
                     className="cursor-pointer"
                     size={24}
-                    onClick={handleGoBack}
                 />
                 <span className="ml-2">返回</span>
             </div>
