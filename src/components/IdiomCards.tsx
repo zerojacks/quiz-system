@@ -361,7 +361,7 @@ const IdiomCards: React.FC = () => {
                                 <div key={`${majorCode}-${minorCode}`} className="mb-8">
                                     <div className="relative inline-block">
                                         {/* 不规则高亮背景 */}
-                                        <div className="absolute inset-0 m-0 p-0 bg-opacity-50" style={{
+                                        <div className="absolute inset-0 m-0 p-0 bg-opacity-50 " style={{
                                             backgroundColor: backgroundColor, // 可自定义颜色
                                             clipPath: 'polygon(20% 0%, 100% 0%, 100% 80%, 80% 100%, 0% 100%, 0% 20%)'
                                         }}></div>
@@ -369,7 +369,7 @@ const IdiomCards: React.FC = () => {
                                             {minorGroup.minorTypeName || '未分类'}
                                         </span>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                                         {minorGroup.idioms.map(idiom => (
                                             <IdiomCard
                                                 key={idiom.idiom}
