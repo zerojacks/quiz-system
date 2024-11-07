@@ -257,7 +257,7 @@ export const IdiomPage: React.FC = () => {
     useEffect(() => {
         if (searchTerm.trim()) {
             const results = idiomsData.filter(idiom =>
-                idiom.idiom.toLowerCase().includes(searchTerm.toLowerCase())
+                idiom.idiom.toLowerCase().startsWith(searchTerm.toLowerCase())
             );
             setSuggestions(results);
             setShowSuggestions(results.length > 0);
