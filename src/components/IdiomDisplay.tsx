@@ -25,15 +25,15 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedImage, setSelectedImage] = useState<ImageInfo | null>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadinginfo, setUploadingInfo] = useState<UploadingInfo>({state:false, content:""});
+    const [uploadinginfo, setUploadingInfo] = useState<UploadingInfo>({ state: false, content: "" });
     const [updateTimer, setUpdateTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const getidiominfo = async() => {
+        const getidiominfo = async () => {
             setIsLoading(true);
             const timer = startUpdateTimeout();
-            setUploadingInfo({state:true, content:"正在读取，请稍后..."});
+            setUploadingInfo({ state: true, content: "正在读取，请稍后..." });
             try {
                 const getidiom = await getIdiomApi(idiom.idiom);
                 if (getidiom) {
@@ -43,13 +43,13 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                     toast.error('获取成语信息失败，请重试');
                     setExamImages([]);
                     setLocalIdiom(idiom);
-                }       
+                }
             } catch (error) {
                 setExamImages([]);
                 setLocalIdiom(idiom);
             } finally {
                 clearUpdateTimeout(timer);
-                setUploadingInfo({state:false, content:""});
+                setUploadingInfo({ state: false, content: "" });
                 setIsLoading(false);
             }
         }
@@ -67,7 +67,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
 
     const startUpdateTimeout = () => {
         const timer = setTimeout(() => {
-            setUploadingInfo({state:false, content:""});
+            setUploadingInfo({ state: false, content: "" });
             toast.error('更新超时，请重试');
         }, UPDATE_TIMEOUT);
         setUpdateTimer(timer);
@@ -119,7 +119,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
 
     const handleDeleteImage = async (index: number) => {
         if (uploadinginfo.state) return;
-        setUploadingInfo({state:true, content:"正在删除图片，请稍后..."});
+        setUploadingInfo({ state: true, content: "正在删除图片，请稍后..." });
         const timer = startUpdateTimeout();
 
         try {
@@ -135,14 +135,14 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
         } catch (error) {
             toast.error('删除图片失败，请重试。');
         } finally {
-            setUploadingInfo({state:false, content:""});
+            setUploadingInfo({ state: false, content: "" });
             clearUpdateTimeout(timer);
         }
     };
 
     const handleUpdateIdiom = async (updatedIdiom: Idiom) => {
         if (uploadinginfo.state) return;
-        setUploadingInfo({state:true, content:"正在更新，请稍后..."});
+        setUploadingInfo({ state: true, content: "正在更新，请稍后..." });
         const timer = startUpdateTimeout();
 
         try {
@@ -154,7 +154,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
             toast.error('更新成语失败，请重试。');
             throw error;
         } finally {
-            setUploadingInfo({state:false, content:""});
+            setUploadingInfo({ state: false, content: "" });
             clearUpdateTimeout(timer);
         }
     };
@@ -282,13 +282,29 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
             <div className="animate-pulse space-y-6">
                 {/* Title skeleton */}
                 <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                
+
                 {/* Type info skeleton */}
                 <div className="space-y-4">
-                    <div className="h-4 bg-gray-200 rounded w-full"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="flex items-center gap-4">
+                        <label className="block text-sm font-medium text-gray-700 min-w-16">
+                            大类
+                        </label>
+                        <div className="flex-1 max-w-xs">
+
+                            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                        </div>
+                    </div>
+                    {/* <div className="h-4 bg-gray-200 rounded w-full"></div> */}
+                    <div className="flex items-center gap-4">
+                        <label className="block text-sm font-medium text-gray-700 min-w-16">
+                            小类
+                        </label>
+                        <div className="flex-1 max-w-xs">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                    </div>
                 </div>
-                
+
                 {/* Description section */}
                 <div className="space-y-2">
                     <h3 className="text-xl font-semibold">描述:</h3>
@@ -297,7 +313,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         <div className="h-4 bg-gray-200 rounded w-full"></div>
                     </div>
                 </div>
-                
+
                 {/* Examples section */}
                 <div className="space-y-2">
                     <h3 className="text-xl font-semibold">例句:</h3>
@@ -307,7 +323,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
                         <div className="h-4 bg-gray-200 rounded w-4/6"></div>
                     </div>
                 </div>
-                
+
                 {/* Images section */}
                 <div className="space-y-2">
                     <h3 className="text-xl font-semibold">真题示例:</h3>
@@ -326,7 +342,7 @@ const IdiomDisplay: React.FC<IdiomDisplayProps> = ({ idiom, onUpdate }) => {
     if (isLoading) {
         return <LoadingSkeleton />;
     }
-    
+
     return (
         <div className="bg-white rounded-lg shadow p-6 relative">
             <button

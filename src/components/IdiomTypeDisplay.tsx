@@ -54,8 +54,8 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
                 } catch (error) {
                     console.error('Error fetching current type information:', error);
                     toast.error('获取当前类型信息失败，请重试。'); // 显示错误消息
-                    setCurrentMajorType({ type_code: idiom.major_type_code, type_name: '未知', description: ''});
-                    setCurrentMinorType({ type_code: idiom.minor_type_code, major_type_code: idiom.major_type_code, type_name: '未知', description: ''});
+                    setCurrentMajorType({ type_code: idiom.major_type_code, type_name: '未知', description: '' });
+                    setCurrentMinorType({ type_code: idiom.minor_type_code, major_type_code: idiom.major_type_code, type_name: '未知', description: '' });
                 } finally {
                     setLoading(false);
                 }
@@ -102,18 +102,27 @@ const IdiomTypeDisplay: React.FC<TypeDisplayProps> = ({ idiom, isEditing, onUpda
 
     if (loading) {
         return (
-            <div className="bg-white shadow rounded-lg">
-                <div className="p-4 border-b">
-                    <h3 className="text-lg font-medium">类型信息</h3>
+            <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                    <label className="block text-sm font-medium text-gray-700 min-w-16">
+                        大类
+                    </label>
+                    <div className="flex-1 max-w-xs animate-pulse">
+
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    </div>
                 </div>
-                <div className="p-4">
-                    <div className="animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+                {/* <div className="h-4 bg-gray-200 rounded w-full"></div> */}
+                <div className="flex items-center gap-4">
+                    <label className="block text-sm font-medium text-gray-700 min-w-16">
+                        小类
+                    </label>
+                    <div className="flex-1 max-w-xs animate-pulse">
                         <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                     </div>
                 </div>
             </div>
-        );
+        )
     }
 
     const selectedMajorType = majorTypes.find(type => type.type_code === idiom.major_type_code) || null;
