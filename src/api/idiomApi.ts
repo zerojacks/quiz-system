@@ -1,5 +1,5 @@
 // src/api/idiomApi.ts
-const BASE_URL = 'https://quiz-system.zerojack-shi.workers.dev'; // 替换为你的 Worker URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import { Idiom, ImageInfo, MajorInfo, MinorInfo } from '../types/idiom'; // 替换为你的 Idiom 类型定义
 
 export const getIdioms = async () => {
