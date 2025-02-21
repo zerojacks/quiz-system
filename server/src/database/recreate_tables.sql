@@ -1,8 +1,10 @@
--- Create database
-CREATE DATABASE IF NOT EXISTS quiz_system;
-USE quiz_system;
+-- 删除旧表（按照外键依赖顺序）
+DROP TABLE IF EXISTS idioms;
+DROP TABLE IF EXISTS minor_types;
+DROP TABLE IF EXISTS major_types;
 
--- Create idiom_major_types table
+-- 创建新表
+-- 创建 idiom_major_types 表
 CREATE TABLE IF NOT EXISTS idiom_major_types (
     type_code VARCHAR(50) PRIMARY KEY,
     type_name VARCHAR(100) NOT NULL,
@@ -11,7 +13,7 @@ CREATE TABLE IF NOT EXISTS idiom_major_types (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Create idiom_minor_types table
+-- 创建 idiom_minor_types 表
 CREATE TABLE IF NOT EXISTS idiom_minor_types (
     type_code VARCHAR(50) PRIMARY KEY,
     major_type_code VARCHAR(50) NOT NULL,
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS idiom_minor_types (
     FOREIGN KEY (major_type_code) REFERENCES idiom_major_types(type_code)
 );
 
--- Create idioms table
+-- 创建 idioms 表
 CREATE TABLE IF NOT EXISTS idioms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     idiom VARCHAR(100) NOT NULL UNIQUE,
