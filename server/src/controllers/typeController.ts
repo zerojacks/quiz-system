@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import pool from '../config/database';
-import { MajorType, MinorType } from '../types';
+import { MajorInfo, MinorInfo } from '../types';
 
 export const createMajorType = async (req: Request, res: Response) => {
     try {
-        const { type_code, type_name, description } = req.body as MajorType;
+        const { type_code, type_name, description } = req.body as MajorInfo;
 
         if (!type_code || !type_name) {
             return res.status(400).json({ message: 'Type code and name are required' });
@@ -25,7 +25,7 @@ export const createMajorType = async (req: Request, res: Response) => {
 export const updateMajorType = async (req: Request, res: Response) => {
     try {
         const { typeCode } = req.params;
-        const { type_name, description } = req.body as MajorType;
+        const { type_name, description } = req.body as MajorInfo;
 
         if (!type_name) {
             return res.status(400).json({ message: 'Type name is required' });
@@ -87,7 +87,7 @@ export const getMajorTypeByCode = async (req: Request, res: Response) => {
 
 export const createMinorType = async (req: Request, res: Response) => {
     try {
-        const { type_code, major_type_code, type_name, description } = req.body as MinorType;
+        const { type_code, major_type_code, type_name, description } = req.body as MinorInfo;
 
         if (!type_code || !major_type_code || !type_name) {
             return res.status(400).json({ message: 'Type code, major type code, and name are required' });
@@ -118,7 +118,7 @@ export const createMinorType = async (req: Request, res: Response) => {
 export const updateMinorType = async (req: Request, res: Response) => {
     try {
         const { typeCode } = req.params;
-        const { type_name, description } = req.body as MinorType;
+        const { type_name, description } = req.body as MinorInfo;
 
         if (!type_name) {
             return res.status(400).json({ message: 'Type name is required' });
