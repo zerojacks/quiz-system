@@ -57,3 +57,39 @@ export const getIdiomByName = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+export const updateIdiom = async (req: Request, res: Response) => {
+    try {
+        const { idiom, description, examples, examImages, majorTypeCode, minorTypeCode } = req.body;
+
+        if (!idiom) {
+            return res.status(400).json({ message: 'Idiom is required' });
+        }
+
+        const [existingIdiom] = await pool.query(
+            'SELECT idiom FROM idioms WHERE idiom = ?',
+            [idiom]
+        );
+
+        if (!Array.isArray(existingIdiom) || existingIdiom.length === 0) {
+            return res.status(404).json({ message: 'Idiom not found' });
+        }
+
+        await pool.query(
+            'UPDATE idioms SET description = ?, examples = ?, exam_images = ?, major_type_code = ?, minor_type_code = ? WHERE idiom = ?',
+            [
+                description,
+                JSON.stringify(examples),
+                examImages ? JSON.stringify(examImages) : null,
+                majorTypeCode,
+                minorTypeCode,
+                idiom
+            ]
+        );
+
+        res.json({ message: 'Idiom updated successfully' });
+    } catch (error) {
+        console.error('Error updating idiom:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
