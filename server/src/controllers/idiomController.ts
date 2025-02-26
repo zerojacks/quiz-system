@@ -66,28 +66,50 @@ export const updateIdiom = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Idiom is required' });
         }
 
+        // 检查成语是否存在
         const [existingIdiom] = await pool.query(
             'SELECT idiom FROM idioms WHERE idiom = ?',
             [idiom]
         );
 
         if (!Array.isArray(existingIdiom) || existingIdiom.length === 0) {
-            return res.status(404).json({ message: 'Idiom not found' });
+            // 如果成语不存在，插入新成语
+            await pool.query(
+                `INSERT INTO idioms (idiom, description, examples, exam_images, major_type_code, minor_type_code) 
+                VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    idiom,
+                    description,
+                    JSON.stringify(examples),
+                    examImages ? JSON.stringify(examImages) : null,
+                    majorTypeCode || null,
+                    minorTypeCode || null
+                ]
+            );
+
+            return res.json({ success: true, message: '成语已插入' });
         }
 
+        // 如果存在，执行更新
         await pool.query(
-            'UPDATE idioms SET description = ?, examples = ?, exam_images = ?, major_type_code = ?, minor_type_code = ? WHERE idiom = ?',
+            `UPDATE idioms 
+            SET description = ?, 
+                examples = ?,
+                exam_images = ?,
+                major_type_code = ?,
+                minor_type_code = ?
+            WHERE idiom = ?`,
             [
                 description,
                 JSON.stringify(examples),
                 examImages ? JSON.stringify(examImages) : null,
-                majorTypeCode,
-                minorTypeCode,
+                majorTypeCode || null,
+                minorTypeCode || null,
                 idiom
             ]
         );
 
-        res.json({ message: 'Idiom updated successfully' });
+        res.json({ success: true, message: '成语已更新' });
     } catch (error) {
         console.error('Error updating idiom:', error);
         res.status(500).json({ message: 'Internal server error' });
